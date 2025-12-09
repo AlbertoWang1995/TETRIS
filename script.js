@@ -58,11 +58,13 @@ const ROWS =20;
 const COLS =10;
 
 let canvas=document.querySelector("#tetris");
+let scoreboard= document.querySelector("h2");
 let ctx=canvas.getContext("2d");
 ctx.scale(30,30);
 
 let pieceObj= null;
 let grid = generateGrid();
+let score=0;
 console.log(grid);
 //console.log(pieceObj);
 function generateRandomPiece(){
@@ -80,12 +82,42 @@ setInterval (newGameState,500);
 
 
 function newGameState(){
+    checkGrid();
     if(pieceObj == null){
         pieceObj = generateRandomPiece();
         renderPiece();
     }
     moveDown();
 }
+
+
+function checkGrid(){
+    let count = 0;
+    for( let i=0; i<grid.length; i++){
+        let allFilled =true;
+        for (let j=0; j<grid[i].length; j++){
+            if(grid[i][j]== 0){
+                allFilled= false;
+            }
+        }
+        if(allFilled){
+            grid.splice(i,1);
+            grid.unshift([0,0,0,0,0,0,0,0,0,0]);
+            count++;
+        }
+    }
+
+    if( count==1){
+        score+=10;
+    }else if( count==2){
+        score+=30;
+    }else if( count==3){
+        score+=50;
+    }else if( count>3){
+        score+=100;
+    }
+    scoreboard.innerHTML = "Score: " + score;
+};
 
 
 function renderPiece(){
@@ -114,6 +146,11 @@ function moveDown(){
              }
             }
         }
+    if(pieceObj.y == 0){
+        alert("Game Over");
+        grid=generateGrid();
+        score = 0;
+    }
     pieceObj = null;
     }       
     renderGrid();
@@ -133,13 +170,30 @@ function moveRight(){
 };
 
 function rotate(){
+    let rotatedPiece = [];
+    let piece = pieceObj.piece;
+    for(let i =0; i<piece.length ; i++){
+        rotatedPiece.push([]);
+        for(let j=0; j<piece[i].length ; j++){
+        rotatedPiece[i].push(0);
+        }
+    }
+    for(let i =0; i<piece.length ; i++){
+        for(let j=0; j<piece[i].length ; j++){
+        rotatedPiece[i][j] = piece[j][i];
+        }
+    }
+    for(let i = 0; i < rotatedPiece.length; i++){
+    rotatedPiece[i] = rotatedPiece[i].reverse();
+}
 
-
+    if(!collision(pieceObj.x, pieceObj.y, rotatedPiece))
+    pieceObj.piece = rotatedPiece;
     renderGrid();
 };
 
-function collision (x,y){
-    let piece = pieceObj.piece;
+function collision (x,y, rotatedPiece){
+    let piece = rotatedPiece || pieceObj.piece;
     for(let i=0 ; i<piece.length; i++){
         for(let j=0; j<piece[i].length; j++){
             if(piece[i][j] == 1) {
@@ -147,6 +201,9 @@ function collision (x,y){
                 let q = y+i;
 
                 if(p>=0 && p<COLS && q>=0 && q<ROWS){
+                    if(grid[q][p]>0){
+                        return true
+                    }
                 }else{
                     return true;
                 }
@@ -186,10 +243,10 @@ document.addEventListener("keydown", function(e){
          moveLeft();
     }else if(key == "ArrowRight"){
          moveRight();
-    }else if(key == "ArrowPUp"){
-         Rotate();
+    }else if(key == "ArrowUp"){
+         rotate();
     }
-})
+});
 
 
 
